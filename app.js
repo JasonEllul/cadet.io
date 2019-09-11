@@ -6,15 +6,17 @@ var io = require('socket.io').listen(server);
 
 var players = {};
 
-app.use(express.static(__dirname + '/../client/public'));
+
+// Serve the Webpage
+app.use(express.static(__dirname + '/client/public'));
 
 app.get('/', function (req, res) {
-  res.sendFile(__dirname + '/../client/public/index.html');
+  res.sendFile(__dirname + '/client/public/index.html');
 });
 
 
 io.on('connection', function (socket) {
-  console.log('Connected: ' + socket.id);
+  console.log('Player Connected: ' + socket.id);
   // create a new player and add it to our players object
   players[socket.id] = {
     rotation: 0,
