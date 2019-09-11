@@ -34,13 +34,27 @@
         const mapSize = 5600;
         // Background Tiles
         this.tileSprite = this.add.tileSprite(mapSize / 2, mapSize / 2, mapSize, mapSize, 'bg');
-
-        console.log(this.physics);
-
+        // console.log(this.physics);
         // Set the boundaries of our game world
         this.physics.world.bounds.width = mapSize;
         this.physics.world.bounds.height = mapSize;
 
+        // Add keyboard inputs
+        this.cursors = this.input.keyboard.createCursorKeys();
+
+        // Setup Socket Connection
+        this.socket = io();
+        this.socket.on('currentPlayers', (players) => {
+          // Iterate through connections and get player
+          Object.keys(players).forEach((id) => {
+            if (players[id].playerId === this.socket.id) {
+              this.createPlayer(players[id]);
+            }
+          });
+        });
+      }
+
+      createPlayer(player) {
         this.player = this.physics.add.image(this.physics.world.bounds.centerX, this.physics.world.bounds.centerX, 'ship');
         this.player.setDamping(true);
         this.player.setDrag(0.99);
@@ -48,35 +62,30 @@
         // Angular Limits
         this.player.setAngularDrag(300);
         this.player.body.maxAngular = 200;
-
+        // Collides with world bounds of scene
         this.player.setCollideWorldBounds(true);
-
-        this.cursors = this.input.keyboard.createCursorKeys();
-
         // Make the camera follow the player
         this.cameras.main.startFollow(this.player.body);
-
-        // Setup Socket Connection
-        this.socket = io();
       }
 
       update() {
-        if (this.cursors.up.isDown) {
-          this.physics.velocityFromRotation(this.player.rotation, 200, this.player.body.acceleration);
-        } else {
-          this.player.setAcceleration(0);
-        }
+        if (this.player) {
+          if (this.cursors.up.isDown) {
+            this.physics.velocityFromRotation(this.player.rotation, 200, this.player.body.acceleration);
+          } else {
+            this.player.setAcceleration(0);
+          }
+          if (this.cursors.left.isDown) {
+            this.player.setAngularAcceleration(-300);
+          } else if (this.cursors.right.isDown) {
+            this.player.setAngularAcceleration(300);
+          } else {
+            this.player.setAngularAcceleration(0);
+          }
 
-        if (this.cursors.left.isDown) {
-          this.player.setAngularAcceleration(-300);
-        } else if (this.cursors.right.isDown) {
-          this.player.setAngularAcceleration(300);
-        } else {
-          this.player.setAngularAcceleration(0);
+          // text.setText('Speed: ' + this.player.body.speed);
+          this.events.emit('updatePlayer', this.player);
         }
-
-        // text.setText('Speed: ' + this.player.body.speed);
-        this.events.emit('updatePlayer', this.player);
 
         // if (game.input.keyboard.isDown(Phaser.Keyboard.SPACEBAR))
         // {
