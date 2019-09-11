@@ -3,17 +3,18 @@ var express = require('express');
 var app = express();
 var server = require('http').Server(app);
 var io = require('socket.io').listen(server);
- 
+
 var players = {};
- 
-app.use(express.static(__dirname + '/public'));
- 
+
+app.use(express.static(__dirname + '/../client/public'));
+
 app.get('/', function (req, res) {
-  res.sendFile(__dirname + '/index.html');
+  res.sendFile(__dirname + '/../client/public/index.html');
 });
- 
+
+
 io.on('connection', function (socket) {
-  console.log('a user connected');
+  console.log('Connected: ' + socket.id);
   // create a new player and add it to our players object
   players[socket.id] = {
     rotation: 0,
@@ -26,7 +27,7 @@ io.on('connection', function (socket) {
   socket.emit('currentPlayers', players);
   // update all other players of the new player
   socket.broadcast.emit('newPlayer', players[socket.id]);
- 
+
   // when a player disconnects, remove them from our players object
   socket.on('disconnect', function () {
     console.log('user disconnected');
@@ -36,7 +37,7 @@ io.on('connection', function (socket) {
     io.emit('disconnect', socket.id);
   });
 });
- 
-server.listen(8081, function () {
+
+server.listen(8080, function () {
   console.log(`Listening on ${server.address().port}`);
 });
