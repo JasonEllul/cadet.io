@@ -8,6 +8,7 @@
   <style type="text/css">
     body {
       margin: 0;
+      background-color: black;
     }
   </style>
 </head>
@@ -31,22 +32,23 @@
       }
 
       create() {
+        const mapSize = 5600;
         // Background Tiles
-        this.tileSprite = this.add.tileSprite(700, 700, 1400, 1400, 'bg');
+        this.tileSprite = this.add.tileSprite(mapSize / 2, mapSize / 2, mapSize, mapSize, 'bg');
 
         console.log(this.physics);
 
         // set the boundaries of our game world
-        this.physics.world.bounds.width = 1400;
-        this.physics.world.bounds.height = 1400;
+        this.physics.world.bounds.width = mapSize;
+        this.physics.world.bounds.height = mapSize;
 
         this.player = this.physics.add.image(this.physics.world.bounds.centerX, this.physics.world.bounds.centerX, 'ship');
         this.player.setDamping(true);
         this.player.setDrag(0.99);
         this.player.setMaxVelocity(250);
         // Angular Limits
-        this.player.setAngularDrag(1000);
-        this.player.body.maxAngular = 300;
+        this.player.setAngularDrag(300);
+        this.player.body.maxAngular = 200;
 
         this.player.setCollideWorldBounds(true);
 
@@ -64,9 +66,9 @@
         }
 
         if (this.cursors.left.isDown) {
-          this.player.setAngularAcceleration(-2000);
+          this.player.setAngularAcceleration(-300);
         } else if (this.cursors.right.isDown) {
-          this.player.setAngularAcceleration(2000);
+          this.player.setAngularAcceleration(300);
         } else {
           this.player.setAngularAcceleration(0);
         }
@@ -109,13 +111,13 @@
 
     }
 
-    // Create Game Object
+    // Game Config
     var config = {
       type: Phaser.AUTO,
       parent: 'phaser-example',
       backgroundColor: '#000000',
-      width: 800,
-      height: 600,
+      width: window.innerWidth,
+      height: window.innerHeight,
       physics: {
         default: "arcade",
         arcade: {
@@ -126,6 +128,7 @@
       // Multiple Scenes
       scene: [GameScene, UIScene]
     };
+    // Create Game Object
     let game = new Phaser.Game(config);
 
 
