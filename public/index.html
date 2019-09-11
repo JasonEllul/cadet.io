@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>cadet.io</title>
+  <script src="//cdn.jsdelivr.net/npm/phaser@3.11.0/dist/phaser.js"></script>
+  <style type="text/css">
+    body {
+      margin: 0;
+    }
+  </style>
+</head>
+
+<body>
+
+  <script type="text/javascript">
+
+
+    // Game Scene - contains player and map drawing
+    class GameScene extends Phaser.Scene {
+
+      constructor() {
+        super('GameScene');
+      }
+
+      preload() {
+        this.load.image('bullet', 'assets/bullets.png');
+        this.load.image('ship', 'assets/ship.png');
+        this.load.image('bg', 'assets/starfield.png');
+      }
+
+      create() {
+        // Background Tiles
+        this.tileSprite = this.add.tileSprite(700, 700, 1400, 1400, 'bg');
+
+        console.log(this.physics);
+
+        // set the boundaries of our game world
+        this.physics.world.bounds.width = 1400;
+        this.physics.world.bounds.height = 1400;
+
+        this.player = this.physics.add.image(this.physics.world.bounds.centerX, this.physics.world.bounds.centerX, 'ship');
+        this.player.setDamping(true);
+        this.player.setDrag(0.99);
+        this.player.setMaxVelocity(250);
+        // Angular Limits
+        this.player.setAngularDrag(1000);
+        this.player.body.maxAngular = 300;
+
+        this.player.setCollideWorldBounds(true);
+
+        this.cursors = this.input.keyboard.createCursorKeys();
+
+        // make the camera follow the player
+        this.cameras.main.startFollow(this.player.body);
+      }
+
+      update() {
+        if (this.cursors.up.isDown) {
+          this.physics.velocityFromRotation(this.player.rotation, 200, this.player.body.acceleration);
+        } else {
+          this.player.setAcceleration(0);
+        }
+
+        if (this.cursors.left.isDown) {
+          this.player.setAngularAcceleration(-2000);
+        } else if (this.cursors.right.isDown) {
+          this.player.setAngularAcceleration(2000);
+        } else {
+          this.player.setAngularAcceleration(0);
+        }
+
+        // text.setText('Speed: ' + this.player.body.speed);
+        this.events.emit('updatePlayer', this.player);
+
+        // if (game.input.keyboard.isDown(Phaser.Keyboard.SPACEBAR))
+        // {
+        //     fireBullet();
+        // }
+
+        // this.physics.world.wrap(player, 32);
+
+        // bullets.forEachExists(screenWrap, this);
+      }
+    }
+
+    // UIScene - scene for the UI Overlay
+    class UIScene extends Phaser.Scene {
+
+      constructor() {
+        super({ key: 'UIScene', active: true });
+      }
+
+      create() {
+
+        var text = this.add.text(10, 10, '', { font: '16px Courier', fill: '#00ff00' });
+
+        //  Grab a reference to the Game Scene
+        let ourGame = this.scene.get('GameScene');
+
+        //  Listen for events from it
+        ourGame.events.on('updatePlayer', function (player) {
+          // Debug player physics
+          text.setText('Velocity: ' + player.body.angularVelocity);
+
+        }, this);
+      }
+
+    }
+
+    // Create Game Object
+    var config = {
+      type: Phaser.AUTO,
+      parent: 'phaser-example',
+      backgroundColor: '#000000',
+      width: 800,
+      height: 600,
+      physics: {
+        default: "arcade",
+        arcade: {
+          fps: 60,
+          gravity: { y: 0 }
+        }
+      },
+      // Multiple Scenes
+      scene: [GameScene, UIScene]
+    };
+    let game = new Phaser.Game(config);
+
+
+  </script>
+
+</body>
+
+</html>
