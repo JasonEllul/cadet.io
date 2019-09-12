@@ -45,8 +45,9 @@
         // Setup other players
         this.otherPlayers = this.physics.add.group();
 
-        // Setup Socket Connection
+        // Establish Socket Connection
         this.socket = io();
+
         // Get all current connections
         this.socket.on('currentPlayers', (players) => {
           // Iterate through connections and make player if matches socket
@@ -58,11 +59,13 @@
             }
           });
         });
+
         // Add another player to screen on socket broadcast
         this.socket.on('playerJoined', (player) => {
           console.log(player);
           this.addOtherPlayer(player);
         });
+
         // When server broadcasts that a player moved
         this.socket.on('playerMoved', (playerInfo) => {
           this.otherPlayers.getChildren().forEach(function (otherPlayer) {
@@ -101,7 +104,9 @@
       }
 
       update() {
+        // If player is initiated
         if (this.player) {
+          // Player movement
           if (this.cursors.up.isDown) {
             this.physics.velocityFromRotation(this.player.rotation, 200, this.player.body.acceleration);
           } else {
