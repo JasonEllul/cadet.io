@@ -42,20 +42,32 @@
         // Add keyboard inputs
         this.cursors = this.input.keyboard.createCursorKeys();
 
+        // Setup other players
+        this.otherPlayers = this.physics.add.group();
+
         // Setup Socket Connection
         this.socket = io();
         this.socket.on('currentPlayers', (players) => {
-          // Iterate through connections and get player
+          // Iterate through connections and make player if matches socket
           Object.keys(players).forEach((id) => {
             if (players[id].playerId === this.socket.id) {
               this.createPlayer(players[id]);
+            } else {
+              this.addOtherPlayer(players[id]);
             }
           });
         });
+        // Add another player to screen on socket broadcast
+        this.socket.on('playerJoined', (player) => {
+          console.log(player);
+          this.addOtherPlayer(player);
+        });
       }
 
+      // Add player image to screen and make controls
       createPlayer(player) {
-        this.player = this.physics.add.image(this.physics.world.bounds.centerX, this.physics.world.bounds.centerX, 'ship');
+        console.log('Player Created');
+        this.player = this.physics.add.image(this.physics.world.bounds.centerX, this.physics.world.bounds.centerY, 'ship');
         this.player.setDamping(true);
         this.player.setDrag(0.99);
         this.player.setMaxVelocity(250);
@@ -66,6 +78,15 @@
         this.player.setCollideWorldBounds(true);
         // Make the camera follow the player
         this.cameras.main.startFollow(this.player.body);
+      }
+
+      // Add another Image to screen
+      addOtherPlayer(player) {
+        console.log('Other Player Added');
+        const otherPlayer = this.physics.add.image(player.x, player.y, 'ship');
+        otherPlayer.setTint(0xff0000);
+        otherPlayer.playerId = player.playerId;
+        this.otherPlayers.add(otherPlayer);
       }
 
       update() {
