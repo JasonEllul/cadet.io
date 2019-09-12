@@ -47,6 +47,7 @@
 
         // Setup Socket Connection
         this.socket = io();
+        // Get all current connections
         this.socket.on('currentPlayers', (players) => {
           // Iterate through connections and make player if matches socket
           Object.keys(players).forEach((id) => {
@@ -61,6 +62,16 @@
         this.socket.on('playerJoined', (player) => {
           console.log(player);
           this.addOtherPlayer(player);
+        });
+        // When server broadcasts that a player moved
+        this.socket.on('playerMoved', (playerInfo) => {
+          this.otherPlayers.getChildren().forEach(function (otherPlayer) {
+            // Update other players position and rotation
+            if (playerInfo.playerId === otherPlayer.playerId) {
+              otherPlayer.setRotation(playerInfo.rotation);
+              otherPlayer.setPosition(playerInfo.x, playerInfo.y);
+            }
+          });
         });
       }
 
@@ -103,9 +114,19 @@
           } else {
             this.player.setAngularAcceleration(0);
           }
-
-          // text.setText('Speed: ' + this.player.body.speed);
-          this.events.emit('updatePlayer', this.player);
+          // Update Other players connected if players position or rotation changed
+          var x = this.player.x;
+          var y = this.player.y;
+          var r = this.player.rotation;
+          if (this.player.oldPosition && (x !== this.player.oldPosition.x || y !== this.player.oldPosition.y || r !== this.player.oldPosition.rotation)) {
+            this.socket.emit('playerMovement', { x: this.player.x, y: this.player.y, rotation: this.player.rotation });
+          }
+          // save old position data
+          this.player.oldPosition = {
+            x: this.player.x,
+            y: this.player.y,
+            rotation: this.player.rotation
+          };
         }
 
         // if (game.input.keyboard.isDown(Phaser.Keyboard.SPACEBAR))
