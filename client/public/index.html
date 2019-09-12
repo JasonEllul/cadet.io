@@ -98,9 +98,10 @@
       addOtherPlayer(player) {
         console.log('Other Player Added');
         const otherPlayer = this.physics.add.image(player.x, player.y, 'ship');
-        otherPlayer.setTint(0xff0000);
+        otherPlayer.setTint(0xFF00FF);
         otherPlayer.playerId = player.playerId;
         this.otherPlayers.add(otherPlayer);
+        // this.physics.add.collider(this.player, otherPlayer);
       }
 
       update() {
