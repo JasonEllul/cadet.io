@@ -92,16 +92,25 @@
         this.player.setCollideWorldBounds(true);
         // Make the camera follow the player
         this.cameras.main.startFollow(this.player.body);
+        // Player collides with otherPlayers group
+        this.physics.add.overlap(this.player, this.otherPlayers, this.playerCollision, null, this);
+        // this.physics.add.collider(this.player, this.otherPlayers);
+        // Assign socket Id
+        this.player.playerId = player.playerId;
       }
 
       // Add another Image to screen
       addOtherPlayer(player) {
         console.log('Other Player Added');
-        const otherPlayer = this.physics.add.image(player.x, player.y, 'ship');
+        const otherPlayer = this.otherPlayers.create(player.x, player.y, 'ship');
         otherPlayer.setTint(0xFF00FF);
+        // Assign socket Id to other player
         otherPlayer.playerId = player.playerId;
-        this.otherPlayers.add(otherPlayer);
-        // this.physics.add.collider(this.player, otherPlayer);
+      }
+
+      playerCollision(e) {
+        console.log(e);
+        this.player.setTint(0x00FF00);
       }
 
       update() {
