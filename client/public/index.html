@@ -28,6 +28,7 @@
         this.load.image('bullet', 'assets/bullets.png');
         this.load.image('ship', 'assets/ship.png');
         this.load.image('bg', 'assets/starfield.png');
+        this.load.image('blue', 'assets/blue.png');
       }
 
       create() {
@@ -39,11 +40,38 @@
         this.physics.world.bounds.width = mapSize;
         this.physics.world.bounds.height = mapSize;
 
+        var particles = this.add.particles('blue');
+
+
+        // Setup Current Player
+        this.player = this.physics.add.image(this.physics.world.bounds.centerX, this.physics.world.bounds.centerY, 'ship');
+        this.player.setDamping(true);
+        this.player.setDrag(0.99);
+        this.player.setMaxVelocity(250);
+        // Angular Limits
+        this.player.setAngularDrag(300);
+        this.player.body.maxAngular = 200;
+        // Collides with world bounds of scene
+        this.player.setCollideWorldBounds(true);
+        // Make the camera follow the player
+        this.cameras.main.startFollow(this.player.body);
+
         // Add keyboard inputs
         this.cursors = this.input.keyboard.createCursorKeys();
 
         // Setup other players
         this.otherPlayers = this.physics.add.group();
+        // Player collides with otherPlayers group
+        this.physics.add.overlap(this.player, this.otherPlayers, this.playerCollision, null, this);
+
+
+        this.emitter = particles.createEmitter({
+          follow: this.player,
+          speed: { min: 200, max: 400 },
+          scale: { start: 0.1, end: 0.0 },
+          lifespan: 1000,
+          angle: { onEmit: () => { return this.player.angle + 180; } },
+        });
 
         // Establish Socket Connection
         this.socket = io();
@@ -53,7 +81,7 @@
           // Iterate through connections and make player if matches socket
           Object.keys(players).forEach((id) => {
             if (players[id].playerId === this.socket.id) {
-              this.createPlayer(players[id]);
+              this.player.playerId = players[id].playerId;
             } else {
               this.addOtherPlayer(players[id]);
             }
@@ -78,27 +106,6 @@
         });
       }
 
-      // Add player image to screen and make controls
-      createPlayer(player) {
-        console.log('Player Created');
-        this.player = this.physics.add.image(this.physics.world.bounds.centerX, this.physics.world.bounds.centerY, 'ship');
-        this.player.setDamping(true);
-        this.player.setDrag(0.99);
-        this.player.setMaxVelocity(250);
-        // Angular Limits
-        this.player.setAngularDrag(300);
-        this.player.body.maxAngular = 200;
-        // Collides with world bounds of scene
-        this.player.setCollideWorldBounds(true);
-        // Make the camera follow the player
-        this.cameras.main.startFollow(this.player.body);
-        // Player collides with otherPlayers group
-        this.physics.add.overlap(this.player, this.otherPlayers, this.playerCollision, null, this);
-        // this.physics.add.collider(this.player, this.otherPlayers);
-        // Assign socket Id
-        this.player.playerId = player.playerId;
-      }
-
       // Add another Image to screen
       addOtherPlayer(player) {
         console.log('Other Player Added');
@@ -114,35 +121,34 @@
       }
 
       update() {
-        // If player is initiated
-        if (this.player) {
-          // Player movement
-          if (this.cursors.up.isDown) {
-            this.physics.velocityFromRotation(this.player.rotation, 200, this.player.body.acceleration);
-          } else {
-            this.player.setAcceleration(0);
-          }
-          if (this.cursors.left.isDown) {
-            this.player.setAngularAcceleration(-300);
-          } else if (this.cursors.right.isDown) {
-            this.player.setAngularAcceleration(300);
-          } else {
-            this.player.setAngularAcceleration(0);
-          }
-          // Update Other players connected if players position or rotation changed
-          var x = this.player.x;
-          var y = this.player.y;
-          var r = this.player.rotation;
-          if (this.player.oldPosition && (x !== this.player.oldPosition.x || y !== this.player.oldPosition.y || r !== this.player.oldPosition.rotation)) {
-            this.socket.emit('playerMovement', { x: this.player.x, y: this.player.y, rotation: this.player.rotation });
-          }
-          // save old position data
-          this.player.oldPosition = {
-            x: this.player.x,
-            y: this.player.y,
-            rotation: this.player.rotation
-          };
+        // Player movement
+        if (this.cursors.up.isDown) {
+          this.physics.velocityFromRotation(this.player.rotation, 200, this.player.body.acceleration);
+          this.emitter.on = true;
+        } else {
+          this.player.setAcceleration(0);
+          this.emitter.on = false;
         }
+        if (this.cursors.left.isDown) {
+          this.player.setAngularAcceleration(-300);
+        } else if (this.cursors.right.isDown) {
+          this.player.setAngularAcceleration(300);
+        } else {
+          this.player.setAngularAcceleration(0);
+        }
+        // Update Other players connected if players position or rotation changed
+        var x = this.player.x;
+        var y = this.player.y;
+        var r = this.player.rotation;
+        if (this.player.oldPosition && (x !== this.player.oldPosition.x || y !== this.player.oldPosition.y || r !== this.player.oldPosition.rotation)) {
+          this.socket.emit('playerMovement', { x: this.player.x, y: this.player.y, rotation: this.player.rotation });
+        }
+        // save old position data
+        this.player.oldPosition = {
+          x: this.player.x,
+          y: this.player.y,
+          rotation: this.player.rotation
+        };
 
         // if (game.input.keyboard.isDown(Phaser.Keyboard.SPACEBAR))
         // {
